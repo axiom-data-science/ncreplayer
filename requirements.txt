@@ -1,0 +1,5 @@
+click
+easyavro
+numpy
+pandas
+pocean-core

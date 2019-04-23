@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "name": "axds.platforms.platform.data.value",
+  "doc": "Add single platfolrm row for a specific uuid",
+  "fields": [
+    { "name": "uuid",          "type": "string",                      "doc": "UUID of the platform"},
+    { "name": "analysis",      "type": ["null", "string"],            "doc": "A key to use to create multiple data streams per platform if required. eg. 'summary' or 'monthly_bin'"},
+    { "name": "time",          "type": "string",                      "doc": "timestamp in UTC"},
+    { "name": "lat",           "type": "double",                      "doc": "wgs84 latitude"},
+    { "name": "lon",           "type": "double",                      "doc": "wgs84 longitude"},
+    { "name": "z",             "type": ["null", "double"],  "default": 0.0,    "doc": "device depth/elevation, in meters positive up from WGS84"},
+    {
+      "name": "values",
+      "doc":  "measurement values",
+      "type": [
+        "null",
+        {
+          "type": "map",
+          "values": [
+            "null",
+            "boolean",
+            "int",
+            "long",
+            "float",
+            "double",
+            "bytes",
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "meta",
+      "doc":  "JSON string representation of the meta",
+      "type": ["null", "string"]
+    }
+  ]
+}

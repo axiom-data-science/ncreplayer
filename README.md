@@ -2,7 +2,7 @@
 
 Small little utility designed to load a CF DSG compliant netCDF file and replay it back onto a Kafka topic in either `batch` mode or `stream` mode. Optionally control the timestamps and timedeltas in the original file using configuration parameters.
 
-Data is serialized using the AVRO schema in `schema.avsc`.
+Data is formatted as described in the AVRO schema file `schema.avsc`. You can choose to serialize the data as `avro`, `msgpack` or the default `json`.
 
 
 ## WHY?
@@ -57,11 +57,15 @@ $ ncreplay
 Usage: ncreplay [OPTIONS] FILENAME COMMAND [ARGS]...
 
 Options:
-  --brokers TEXT      Kafka broker string (comman separated)  [required]
-  --registry TEXT     URL to a Schema Registry  [required]
-  --topic TEXT        Kafka topic to send the data to  [required]
-  --meta / --no-meta  Include the `nco-json` metadata in each message?
-  --help              Show this message and exit.
+  --brokers TEXT                  Kafka broker string (comman separated)
+                                  [required]
+  --topic TEXT                    Kafka topic to send the data to  [required]
+  --packing [json|avro|msgpack]   The data packing algorithm to use
+  --registry TEXT                 URL to a Schema Registry if avro packing is
+                                  requested
+  --meta / --no-meta              Include the `nco-json` metadata in each
+                                  message?
+  --help                          Show this message and exit.
 
 Commands:
   batch   Batch process a netCDF file in chunks, pausing every [chunk] for...
@@ -105,8 +109,41 @@ Options:
 
 ## Development / Testing
 
-There are no tests. There is a file at `tests/data/bb_example.nc` that you can play around with. If you need an example kafka ecosystem to play with, the defaults for `ncreplayer` will work out-of-the box with this but you'll have to load the schema into the Schema Registry yourself.
+There are no tests (yet) but you can play around with the options using files included in this repository
 
+First setup a listener
+
+```bash
+$ docker run -it --rm --net=host \
+  landoop/fast-data-dev:1.0.1  \
+    kafka-console-consumer \
+      --bootstrap-server localhost:4001 \
+      --topic axds-netcdf-replayer-data
 ```
-$ 
+
+Now batch or stream a file:
+
+```bash
+# Batch
+$ ncreplay tests/data/gda_example.nc batch -d 10 -c 10
+
+# Stream
+$ ncreplay tests/data/gda_example.nc stream -d 10
+```
+
+To test the `avro` packing, setup a listener that will unpack the data automatically:
+
+```bash
+$ docker run -it --rm --net=host \
+  landoop/fast-data-dev:1.0.1  \
+    kafka-avro-console-consumer \
+      --bootstrap-server localhost:4001 \
+      --property schema.registry.url=http://localhost:4002 \
+      --topic axds-netcdf-replayer-data
+```
+
+And use `avro` packing
+
+```bash
+$ ncreplay --packing avro tests/data/gda_example.nc batch -d 10 -c 10
 ```

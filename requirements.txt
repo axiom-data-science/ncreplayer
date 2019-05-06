@@ -1,5 +1,6 @@
 click
-easyavro
+easyavro>=2.4.0
+msgpack-python
 numpy
 pandas
 pocean-core

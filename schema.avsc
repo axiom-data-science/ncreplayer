@@ -1,7 +1,7 @@
 {
   "type": "record",
-  "name": "axds.platforms.platform.data.value",
-  "doc": "Add single platfolrm row for a specific uuid",
+  "name": "axds.netcdf.replayer.data.value",
+  "doc": "A single replayer record from a CF DSG netCDF file",
   "fields": [
     { "name": "uuid",          "type": "string",                      "doc": "UUID of the platform"},
     { "name": "analysis",      "type": ["null", "string"],            "doc": "A key to use to create multiple data streams per platform if required. eg. 'summary' or 'monthly_bin'"},

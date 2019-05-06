@@ -1,17 +1,21 @@
+#!python
+# coding=utf-8
 import time
 import math
 import json
+from pathlib import Path
 from collections import OrderedDict
 from datetime import timedelta, datetime
 
 import click
+import msgpack
 import numpy as np
 import pandas as pd
-from easyavro import EasyAvroProducer
+from avro.schema import Parse
+from easyavro import EasyAvroProducer, EasyProducer
 from pocean.dsg import *  # noqa
 from pocean.cf import CFDataset
 from pocean.utils import get_mapped_axes_variables, get_default_axes
-
 
 
 def extract_axes(filename):
@@ -100,7 +104,7 @@ def recalc_with_delta(df, axes, starting, delta):
     return df
 
 
-def send_frame(df, axes, producer, ncmeta):
+def send_frame(df, axes, producer, ncmeta, packing):
     records = []
 
     for row in df.itertuples():
@@ -122,6 +126,9 @@ def send_frame(df, axes, producer, ncmeta):
         if ncmeta:
             data["meta"] = json.dumps(ncmeta)
 
+        if packing is not None:
+            data = packing(data)
+
         # Clear None values from data
         records.append((None, data))
 
@@ -131,11 +138,12 @@ def send_frame(df, axes, producer, ncmeta):
 @click.group()
 @click.argument('filename', type=click.Path(exists=True))
 @click.option('--brokers',  type=str, required=True, default='localhost:4001', help="Kafka broker string (comman separated)")
-@click.option('--registry', type=str, required=True, default='http://localhost:4002', help="URL to a Schema Registry")
-@click.option('--topic',    type=str, required=True, default='axds-platforms-platform-data', help="Kafka topic to send the data to")
+@click.option('--topic',    type=str, required=True, default='axds-netcdf-replayer-data', help="Kafka topic to send the data to")
+@click.option('--packing',  type=click.Choice(['json', 'avro', 'msgpack']), default='json', help="The data packing algorithm to use")
+@click.option('--registry', type=str, default='http://localhost:4002', help="URL to a Schema Registry if avro packing is requested")
 @click.option('--meta/--no-meta', default=False, help="Include the `nco-json` metadata in each message?")
 @click.pass_context
-def setup(ctx, filename, brokers, registry, topic, meta):
+def setup(ctx, filename, brokers, topic, packing, registry, meta):
     # Learn about the axes from the netCDF file
     axes = extract_axes(filename)
 
@@ -155,12 +163,31 @@ def setup(ctx, filename, brokers, registry, topic, meta):
     ctx.obj['ncmeta'] = ncmeta
 
     # Setup the kafka producer
-    bp = EasyAvroProducer(
-        schema_registry_url=registry,
-        kafka_brokers=brokers.split(','),
-        kafka_topic=topic,
-        key_schema='key'
-    )
+    if packing == 'avro':
+        ctx.obj['packing'] = None
+        schema_path = Path(__file__).parent.parent / 'schema.avsc'
+        schema = Parse(schema_path.open('rb').read())
+        bp = EasyAvroProducer(
+            schema_registry_url=registry,
+            kafka_brokers=brokers.split(','),
+            kafka_topic=topic,
+            value_schema=schema,
+            key_schema='key'
+        )
+    elif packing == 'msgpack':
+        ctx.obj['packing'] = msgpack.dumps
+        bp = EasyProducer(
+            kafka_brokers=brokers.split(','),
+            kafka_topic=topic,
+        )
+    elif packing == 'json':
+        ctx.obj['packing'] = json.dumps
+        bp = EasyProducer(
+            kafka_brokers=brokers.split(','),
+            kafka_topic=topic,
+        )
+
+
     ctx.obj['producer'] = bp
 
 
@@ -184,7 +211,7 @@ def batch(ctx, starting, factor, offset, chunk, delta):
 
         sub = df.iloc[0:chunk]
         click.echo(f"Sending {len(sub)} rows from {sub.time.min()} to {sub.time.max()}")
-        send_frame(sub, ctx.obj['axes'], ctx.obj['producer'], ctx.obj['ncmeta'])
+        send_frame(sub, ctx.obj['axes'], ctx.obj['producer'], ctx.obj['ncmeta'], ctx.obj['packing'])
 
         # reset df to be without the rows we just sent
         df = df.iloc[chunk:]
@@ -201,7 +228,7 @@ def batch(ctx, starting, factor, offset, chunk, delta):
 @click.option('-d', '--delta',    type=click.FLOAT,      default=60.0)
 @click.pass_context
 def stream(ctx, starting, delta):
-    """ Streams each unqiue timestep in the netCDF file every [delta] seconds.
+    """ Streams each unique timestep in the netCDF file every [delta] seconds.
         Optionally you can control the [starting] point of the file and this will re-calculate
         all of the timestamps to match the original timedeltas.
     """
@@ -216,7 +243,7 @@ def stream(ctx, starting, delta):
 
         sub = df.loc[sub_query]  # Extract the rows to send
         click.echo(f"Sending {len(sub)} rows from {send_start} to {send_end}")
-        send_frame(sub, ctx.obj['axes'], ctx.obj['producer'], ctx.obj['ncmeta'])
+        send_frame(sub, ctx.obj['axes'], ctx.obj['producer'], ctx.obj['ncmeta'], ctx.obj['packing'])
 
         # reset df to be without the rows we just sent
         df = df.loc[~sub_query]

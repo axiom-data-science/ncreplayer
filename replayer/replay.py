@@ -1,7 +1,6 @@
 #!python
 # coding=utf-8
 import time
-import math
 import json
 from pathlib import Path
 from collections import OrderedDict
@@ -186,7 +185,6 @@ def setup(ctx, filename, brokers, topic, packing, registry, meta):
             kafka_brokers=brokers.split(','),
             kafka_topic=topic,
         )
-
 
     ctx.obj['producer'] = bp
 

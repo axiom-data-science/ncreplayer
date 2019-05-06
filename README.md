@@ -111,7 +111,27 @@ Options:
 
 There are no tests (yet) but you can play around with the options using files included in this repository
 
-First setup a listener
+First setup a Kafka ecosystem
+
+```bash
+$ docker run -d --net=host \
+    -e ZK_PORT=50000 \
+    -e BROKER_PORT=4001 \
+    -e REGISTRY_PORT=4002 \
+    -e REST_PORT=4003 \
+    -e CONNECT_PORT=4004 \
+    -e WEB_PORT=4005 \
+    -e RUNTESTS=0 \
+    -e DISABLE=elastic,hbase \
+    -e DISABLE_JMX=1 \
+    -e RUNTESTS=0 \
+    -e FORWARDLOGS=0 \
+    -e SAMPLEDATA=0 \
+    --name netcdf-replayer-testing \
+  landoop/fast-data-dev
+```
+
+Then setup a listener
 
 ```bash
 $ docker run -it --rm --net=host \

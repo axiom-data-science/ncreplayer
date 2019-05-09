@@ -213,7 +213,7 @@ def setup(ctx, filename, brokers, topic, packing, registry, uid, gid, meta):
             key_schema='key'
         )
     elif packing == 'msgpack':
-        ctx.obj['packing'] = msgpack.dumps
+        ctx.obj['packing'] = lambda x: msgpack.packb(x, use_bin_type=True)
         bp = EasyProducer(
             kafka_brokers=brokers.split(','),
             kafka_topic=topic,

@@ -17,6 +17,12 @@ from pocean.cf import CFDataset
 from pocean.utils import get_mapped_axes_variables, get_default_axes
 
 
+import logging
+L = logging.getLogger('easyavro')
+L.addHandler(logging.StreamHandler())
+L.setLevel(logging.INFO)
+
+
 def extract_axes(filename):
     # Extract the correct axes based on file variables
     with CFDataset(filename) as ncd:
@@ -51,10 +57,36 @@ def extract_ncmeta(filename):
         return ncmeta
 
 
-def load(filename, axes):
+def load(filename, axes, promotions):
     # Load the DSG and convert to a dataframe
     with CFDataset.load(filename) as ncd:
-        return ncd.to_dataframe(axes=axes)
+
+        df = ncd.to_dataframe(axes=axes)
+
+        for toz, (fromz, extract_fromz) in promotions.items():
+
+            if fromz and fromz in df.columns:
+                # Are we a data variable?
+                df[toz] = df[fromz]
+            elif fromz and hasattr(ncd, fromz):
+                # Are we a global attribute?
+                df[toz] = getattr(ncd, fromz)
+            elif fromz and isinstance(fromz, str):
+                # Are we a passed in value?
+                df[toz] = fromz
+            elif extract_fromz:
+                # Use the pass in defaults ordered by precedence
+                for e in extract_fromz:
+                    if e in df:
+                        # Use the trajectory
+                        df[toz] = df[e]
+                        break
+
+            if toz not in df:
+                # Use nothing
+                df[toz] = None
+
+        return df
 
 
 def recalc_with_factor_offset(df, axes, starting, factor, offset):
@@ -105,20 +137,21 @@ def recalc_with_delta(df, axes, starting, delta):
 
 def send_frame(df, axes, producer, ncmeta, packing):
     records = []
+    value_skips = [ 'Index', 'uid', 'gid' ]
 
     for row in df.itertuples():
 
         rowd = row._asdict()
 
         data = {
-            "uuid": "1",
-            "analysis": None,
+            "uid": rowd['uid'],
+            "gid": rowd['gid'],
             "time": rowd[axes.t].isoformat(),
             "lat": rowd[axes.y],
             "lon": rowd[axes.x],
             "z": rowd[axes.z] or None,
             "values": {
-                k: v for k, v in rowd.items() if k not in axes and k != 'Index'
+                k: v for k, v in rowd.items() if k not in axes and k not in value_skips
             }
         }
 
@@ -140,9 +173,11 @@ def send_frame(df, axes, producer, ncmeta, packing):
 @click.option('--topic',    type=str, required=True, default='axds-netcdf-replayer-data', help="Kafka topic to send the data to")
 @click.option('--packing',  type=click.Choice(['json', 'avro', 'msgpack']), default='json', help="The data packing algorithm to use")
 @click.option('--registry', type=str, default='http://localhost:4002', help="URL to a Schema Registry if avro packing is requested")
+@click.option('--uid', type=str, default='', help="Variable name, global attribute, or value to use for the uid values")
+@click.option('--gid', type=str, default='', help="Variable name, global attribute, or value to use for the gid values")
 @click.option('--meta/--no-meta', default=False, help="Include the `nco-json` metadata in each message?")
 @click.pass_context
-def setup(ctx, filename, brokers, topic, packing, registry, meta):
+def setup(ctx, filename, brokers, topic, packing, registry, uid, gid, meta):
     # Learn about the axes from the netCDF file
     axes = extract_axes(filename)
 
@@ -153,7 +188,11 @@ def setup(ctx, filename, brokers, topic, packing, registry, meta):
         ncmeta = None
 
     # Get a dataframe
-    df = load(filename, axes)
+    promotions = {
+        'uid': (uid, (axes.trajectory, axes.station)),
+        'gid': (gid, None)
+    }
+    df = load(filename, axes, promotions)
 
     # Store info in the context
     ctx.ensure_object(dict)

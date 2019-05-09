@@ -3,8 +3,8 @@
   "name": "axds.netcdf.replayer.data.value",
   "doc": "A single replayer record from a CF DSG netCDF file",
   "fields": [
-    { "name": "uuid",          "type": "string",                      "doc": "UUID of the platform"},
-    { "name": "analysis",      "type": ["null", "string"],            "doc": "A key to use to create multiple data streams per platform if required. eg. 'summary' or 'monthly_bin'"},
+    { "name": "uid",           "type": "string",                      "doc": "Unique identifier for the platform this message and values apply to"},
+    { "name": "gid",           "type": ["null", "string"],            "doc": "A grouping key used to create multiple data streams per platform if required. eg. 'test_1' or 'algorithm_b'"},
     { "name": "time",          "type": "string",                      "doc": "timestamp in UTC"},
     { "name": "lat",           "type": "double",                      "doc": "wgs84 latitude"},
     { "name": "lon",           "type": "double",                      "doc": "wgs84 longitude"},

@@ -20,7 +20,7 @@ This utility is designed to make my life easier. It isn't inteded to be used by 
 **Simplest example**
 ```json
 {
-  "uuid": "1",
+  "uid": "1",
   "time": "2019-04-01T00:00:00Z",
   "lat": 30.5,
   "lon": -76.5,
@@ -30,8 +30,8 @@ This utility is designed to make my life easier. It isn't inteded to be used by 
 **Full Example**
 ```yaml
 {
-  "uuid": "1",
-  "analysis": null,
+  "uid": "1",
+  "gid": null,
   "time": "2019-04-01T00:00:00Z",
   "lat": 30.5,
   "lon": -76.5,
@@ -128,7 +128,7 @@ $ docker run -d --net=host \
     -e FORWARDLOGS=0 \
     -e SAMPLEDATA=0 \
     --name netcdf-replayer-testing \
-  landoop/fast-data-dev
+  landoop/fast-data-dev:1.0.1
 ```
 
 Then setup a listener

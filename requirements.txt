@@ -1,5 +1,5 @@
 click
-easyavro>=2.4.0
+easyavro>=2.5.0
 msgpack-python
 numpy
 pandas

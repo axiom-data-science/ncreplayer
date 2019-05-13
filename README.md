@@ -57,19 +57,23 @@ $ ncreplay
 Usage: ncreplay [OPTIONS] FILENAME COMMAND [ARGS]...
 
 Options:
-  --brokers TEXT                  Kafka broker string (comman separated)
-                                  [required]
-  --topic TEXT                    Kafka topic to send the data to  [required]
-  --packing [json|avro|msgpack]   The data packing algorithm to use
-  --registry TEXT                 URL to a Schema Registry if avro packing is
-                                  requested
-  --meta / --no-meta              Include the `nco-json` metadata in each
-                                  message?
-  --help                          Show this message and exit.
+  --brokers TEXT                 Kafka broker string (comman separated)
+                                 [required]
+  --topic TEXT                   Kafka topic to send the data to  [required]
+  --packing [json|avro|msgpack]  The data packing algorithm to use
+  --registry TEXT                URL to a Schema Registry if avro packing is
+                                 requested
+  --uid TEXT                     Variable name, global attribute, or value to
+                                 use for the uid values
+  --gid TEXT                     Variable name, global attribute, or value to
+                                 use for the gid values
+  --meta / --no-meta             Include the `nco-json` metadata in each
+                                 message?
+  --help                         Show this message and exit.
 
 Commands:
-  batch   Batch process a netCDF file in chunks, pausing every [chunk] for...
-  stream  Streams each unqiue timestep in the netCDF file every `delta`...
+  batch   Batch process a netCDF file in chunks, pausing every [chunk]...
+  stream  Streams each unique timestep in the netCDF file every [delta]...
 ```
 
 ### batch

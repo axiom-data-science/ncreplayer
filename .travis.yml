@@ -48,25 +48,13 @@ script:
     fi
 
 after_success:
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_TAG" != "" ] && [ "$TEST_TARGET" == "default" ]; then
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_TAG" != "" ] && [ "$TRAVIS_JOB_NAME" == "default" ]; then
       conda install -n root conda-build anaconda-client ;
       conda build conda-recipe;
       anaconda -t $ANACONDA_TOKEN upload --force -u axiom-data-science $HOME/miniconda/**/${PACKAGE_NAME}-*.tar.bz2 ;
     fi
 
 deploy:
-
-  - provider: releases
-    api_key:
-      secure: "E6sh0LyCk/InSb9tg83EWyx6xXak+Cu7ChumiGzYqCsN1r4hF+55SiNNToTmH5rn2EoO5UWhvjEMlA6BtWUDNVLJT8/Pl5DQdGab48xc/Pps1DibaAVLuWmNcUc+AuH0+bDKkjvp0EHtAssJCiuFN/qQDAOF7pCiDREidGmYyRSWOGJ4/8EysTtYstuvSU3vUXp8rmlWakEl8SImBWVWZJ8k4EEBi8DMA1/zVFWM7Hj7Q26QoaHqBkokWHDVN5nZv9rEUhhWLRqOABY345HupigGCjb6yFSvHgiEoSAXP4enPIrjYPDizCeYlJB5FCQS6z6c9zeLkgivG2iO+Rb9K2GG9LGfIyXyVE4+rAvNW5N3BHWtkFOYZgaWLMwPad9Cv1JKMA1J6mY8uUcU7+VE43Gc4PcJCs0VHynLbSgJdzqvLicJlqUaoRwVsD1/pUISavm1VvIXqJ1COU8P28O0kkkr1qbygDk1xxdLEzdykP0SktI9C9fGPLIdkKpTH/wGOGrF1Yh9NgvCpepEawVmGF5aIqOSn2orofuP4NsysdOHKPxfN8jqjaiMU71HpqTN7j/WSC5IsAdUCCHwcOHcVyR3cDfKiEfeUWZEONWU24wHOnl8i5Wdlweg0Gfdqco4tByjB/EgAKXHGQxOWC5Rnp4ExwITymxyZeQkLKBZXoc="
-    file_glob: true
-    file: "$HOME/miniconda/**/${PACKAGE_NAME}-*.tar.bz2"
-    skip_cleanup: true
-    on:
-      repo: axiom-data-science/ncreplayer
-      tags: true
-      all_branches: master
-      condition: '$TRAVIS_JOB_NAME == "default"'
 
   - provider: pypi
     user: "kwilcox"
@@ -76,6 +64,19 @@ deploy:
     upload_docs: no
     skip_cleanup: true
     on:
+      repo: axiom-data-science/ncreplayer
+      tags: true
+      all_branches: master
+      condition: '$TRAVIS_JOB_NAME == "default"'
+
+  - provider: releases
+    api_key:
+      secure: "E6sh0LyCk/InSb9tg83EWyx6xXak+Cu7ChumiGzYqCsN1r4hF+55SiNNToTmH5rn2EoO5UWhvjEMlA6BtWUDNVLJT8/Pl5DQdGab48xc/Pps1DibaAVLuWmNcUc+AuH0+bDKkjvp0EHtAssJCiuFN/qQDAOF7pCiDREidGmYyRSWOGJ4/8EysTtYstuvSU3vUXp8rmlWakEl8SImBWVWZJ8k4EEBi8DMA1/zVFWM7Hj7Q26QoaHqBkokWHDVN5nZv9rEUhhWLRqOABY345HupigGCjb6yFSvHgiEoSAXP4enPIrjYPDizCeYlJB5FCQS6z6c9zeLkgivG2iO+Rb9K2GG9LGfIyXyVE4+rAvNW5N3BHWtkFOYZgaWLMwPad9Cv1JKMA1J6mY8uUcU7+VE43Gc4PcJCs0VHynLbSgJdzqvLicJlqUaoRwVsD1/pUISavm1VvIXqJ1COU8P28O0kkkr1qbygDk1xxdLEzdykP0SktI9C9fGPLIdkKpTH/wGOGrF1Yh9NgvCpepEawVmGF5aIqOSn2orofuP4NsysdOHKPxfN8jqjaiMU71HpqTN7j/WSC5IsAdUCCHwcOHcVyR3cDfKiEfeUWZEONWU24wHOnl8i5Wdlweg0Gfdqco4tByjB/EgAKXHGQxOWC5Rnp4ExwITymxyZeQkLKBZXoc="
+    file_glob: true
+    file: "$HOME/miniconda/**/${PACKAGE_NAME}-*.tar.bz2"
+    skip_cleanup: true
+    on:
+      repo: axiom-data-science/ncreplayer
       tags: true
       all_branches: master
       condition: '$TRAVIS_JOB_NAME == "default"'

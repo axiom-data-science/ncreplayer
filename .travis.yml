@@ -56,18 +56,19 @@ after_success:
 
 deploy:
 
-  - provider: pypi
-    user: "kwilcox"
-    password:
-      secure: "dplwj5hWKitDNvQn2dbw8tjwsAWmwtkmFzkujOUD368DfQb6ICxMwk4bnxgriIsujW9WjUs6uKzKtK+QY0HC60FYr3dX3ve8TzL9dhDia32vn+LkdH4BQLZoRhRqGUGLKjZS5xURzcmJedDq1OY6c9JRSgd3tlp6KgcRtLZ7asTKCd/MEDFUd0r+3aOSYQBmVX5cOclwUJ7FROL94G68mVxcjDDX56qFqDR4O/j0yrnvv7LSMXKaGHIpRNBGY7Sse8nAlE3ozCzMzI35/K2UZBBIDoIij9hR7rb5L5LVXEWck/JLjLLgyy47wQvxNVLB6mS8U1zBIH7nSrgbCMYQpVUJqkNFoSMN17ZK/bE7Dl45h3Mk+Nu3s6QjjStkrKxvcBQ61Ywzvl/7Wpffpx21WUIpVZCzCWm+QR9WjpB8o7ghBP9Dt/AC33MPZAav20ElAMCn9RAAIqMzJ2ekIUy7+kXuVEDrF+8nLq3XxMPoyA4cakds/TGkja+t+iGETWSglf456lH92TuqyCLFaRkL8eRtmDa8rS7cWbOJjaYiCppVDwIRPU7QgopO/BaDZfINKeClizENMBtAQDWMWeGo0G5dhkVuno2/MTzjnghS7sJn2XPqzKa8JRyIcJfyEFhzvsHRqRS/FTUD3eN2m4POXh5frTqEQIx2wEtH7JWIGVw="
-    distributions: sdist bdist_wheel
-    upload_docs: no
-    skip_cleanup: true
-    on:
-      repo: axiom-data-science/ncreplayer
-      tags: true
-      all_branches: master
-      condition: '$TRAVIS_JOB_NAME == "default"'
+  # Honestly, this isn't working and is eating more time than I am willing to throw at it
+  # - provider: pypi
+  #   user: "kwilcox"
+  #   password:
+  #     secure: "dplwj5hWKitDNvQn2dbw8tjwsAWmwtkmFzkujOUD368DfQb6ICxMwk4bnxgriIsujW9WjUs6uKzKtK+QY0HC60FYr3dX3ve8TzL9dhDia32vn+LkdH4BQLZoRhRqGUGLKjZS5xURzcmJedDq1OY6c9JRSgd3tlp6KgcRtLZ7asTKCd/MEDFUd0r+3aOSYQBmVX5cOclwUJ7FROL94G68mVxcjDDX56qFqDR4O/j0yrnvv7LSMXKaGHIpRNBGY7Sse8nAlE3ozCzMzI35/K2UZBBIDoIij9hR7rb5L5LVXEWck/JLjLLgyy47wQvxNVLB6mS8U1zBIH7nSrgbCMYQpVUJqkNFoSMN17ZK/bE7Dl45h3Mk+Nu3s6QjjStkrKxvcBQ61Ywzvl/7Wpffpx21WUIpVZCzCWm+QR9WjpB8o7ghBP9Dt/AC33MPZAav20ElAMCn9RAAIqMzJ2ekIUy7+kXuVEDrF+8nLq3XxMPoyA4cakds/TGkja+t+iGETWSglf456lH92TuqyCLFaRkL8eRtmDa8rS7cWbOJjaYiCppVDwIRPU7QgopO/BaDZfINKeClizENMBtAQDWMWeGo0G5dhkVuno2/MTzjnghS7sJn2XPqzKa8JRyIcJfyEFhzvsHRqRS/FTUD3eN2m4POXh5frTqEQIx2wEtH7JWIGVw="
+  #   distributions: sdist bdist_wheel
+  #   upload_docs: no
+  #   skip_cleanup: true
+  #   on:
+  #     repo: axiom-data-science/ncreplayer
+  #     tags: true
+  #     all_branches: master
+  #     condition: '$TRAVIS_JOB_NAME == "default"'
 
   - provider: releases
     api_key:

@@ -1,5 +1,9 @@
 ## ncreplayer
 
+[![Build Status](https://travis-ci.org/axiom-data-science/ncreplayer.svg?branch=master)](https://travis-ci.org/axiom-data-science/ncreplayer)
+[![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org)
+
+
 Small little utility designed to load a CF DSG compliant netCDF file and replay it back onto a Kafka topic in either `batch` mode or `stream` mode. Optionally control the timestamps and timedeltas in the original file using configuration parameters.
 
 Data is formatted as described in the AVRO schema file `schema.avsc`. You can choose to serialize the data as `avro`, `msgpack` or the default `json`.

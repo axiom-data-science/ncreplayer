@@ -23,7 +23,7 @@ setup(
     author                        = "Kyle Wilcox",
     author_email                  = "kyle@axds.co",
     url                           = "https://github.com/axiom-data-science/netcdf-replayer",
-    packages                      = find_packages(),
+    packages                      = find_packages(exclude=['tests']),
     install_requires              = reqs,
     entry_points                  = {
         'console_scripts': [

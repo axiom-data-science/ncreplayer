@@ -27,7 +27,7 @@ setup(
     install_requires              = reqs,
     entry_points                  = {
         'console_scripts': [
-            'ncreplay = ncreplayer.replay:setup'
+            'ncreplay = ncreplayer.replay:run'
         ]
     },
     classifiers         = [

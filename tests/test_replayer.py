@@ -18,14 +18,14 @@ def test_simple_replay():
     assert result.exit_code == 0
 
     result = runner.invoke(replay.setup, [
-        str(p),
+        '--filename', str(p),
         'batch',
         '--help',
     ])
     assert result.exit_code == 0
 
     result = runner.invoke(replay.setup, [
-        str(p),
+        '--filename', str(p),
         'stream',
         '--help',
     ])

@@ -58,9 +58,10 @@ This program uses [`Click`](https://click.palletsprojects.com/) for the CLI inte
 
 ```sh
 $ ncreplay
-Usage: ncreplay [OPTIONS] FILENAME COMMAND [ARGS]...
+Usage: ncreplay [OPTIONS] COMMAND [ARGS]...
 
 Options:
+  --filename PATH                Path to a netCDF file  [required]
   --brokers TEXT                 Kafka broker string (comman separated)
                                  [required]
   --topic TEXT                   Kafka topic to send the data to  [required]
@@ -83,7 +84,7 @@ Commands:
 ### batch
 
 ```sh
-$ ncreplay /path/to/file.nc batch --help
+$ ncreplay --filename /path/to/file.nc batch --help
 Usage: ncreplay batch [OPTIONS]
 
   Batch process a netCDF file in chunks, pausing every [chunk] records
@@ -102,7 +103,7 @@ Options:
 ### stream
 
 ```sh
-$ ncreplay /path/to/file.nc stream --help
+$ ncreplay --filename /path/to/file.nc stream --help
 Usage: ncreplay stream [OPTIONS]
 
   Streams each unqiue timestep in the netCDF file every [delta] seconds.
@@ -113,6 +114,24 @@ Options:
   -s, --starting [%Y-%m-%d|%Y-%m-%dT%H:%M:%S|%Y-%m-%d %H:%M:%S]
   -d, --delta FLOAT
   --help                          Show this message and exit
+```
+
+## Environmental Variables
+
+All configuration options can be specified with environmental variables using the pattern `NCREPLAY_[argument_name]=[value]`. To specify the arguments to `batch` and `stream` include `BATCH` or `STREAM` between `NCREPLAY_` and `_[argument_name]`. For more information see [the click documentation](https://click.palletsprojects.com/en/7.x/options/?highlight=auto_envvar_prefix#values-from-environment-variables).
+
+```bash
+NCREPLAY_FILENAME=/foo.nc \
+  ncreplay batch
+
+NCREPLAY_FILENAME=/foo.nc \
+NCREPLAY_BROKERS=localhost:4002 \
+NCREPLAY_PACKING=msgpack \
+  ncreplay batch
+
+NCREPLAY_FILENAME=/foo.nc \
+NCREPLAY_BATCH_STARTING=2010-01-01 \
+  ncreplay batch
 ```
 
 ## Development / Testing
@@ -153,10 +172,10 @@ Now batch or stream a file:
 
 ```bash
 # Batch
-$ ncreplay tests/data/gda_example.nc batch -d 10 -c 10
+$ ncreplay --filename tests/data/gda_example.nc batch -d 10 -c 10
 
 # Stream
-$ ncreplay tests/data/gda_example.nc stream -d 10
+$ ncreplay --filename tests/data/gda_example.nc stream -d 10
 ```
 
 To test the `avro` packing, setup a listener that will unpack the data automatically:
@@ -173,5 +192,5 @@ $ docker run -it --rm --net=host \
 And use `avro` packing
 
 ```bash
-$ ncreplay --packing avro tests/data/gda_example.nc batch -d 10 -c 10
+$ ncreplay --filename tests/data/gda_example.nc --packing avro batch -d 10 -c 10
 ```

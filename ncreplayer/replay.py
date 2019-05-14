@@ -168,7 +168,7 @@ def send_frame(df, axes, producer, ncmeta, packing):
 
 
 @click.group()
-@click.argument('filename', type=click.Path(exists=True))
+@click.option('--filename', type=click.Path(exists=True), required=True, help='Path to a netCDF file')
 @click.option('--brokers',  type=str, required=True, default='localhost:4001', help="Kafka broker string (comman separated)")
 @click.option('--topic',    type=str, required=True, default='axds-netcdf-replayer-data', help="Kafka topic to send the data to")
 @click.option('--packing',  type=click.Choice(['json', 'avro', 'msgpack']), default='json', help="The data packing algorithm to use")
@@ -295,5 +295,9 @@ def stream(ctx, starting, delta):
         time.sleep(delta)
 
 
+def run():
+    setup(auto_envvar_prefix='NCREPLAY')
+
+
 if __name__ == '__main__':
-    setup()
+    run()

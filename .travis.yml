@@ -1,0 +1,79 @@
+language: minimal
+
+sudo: false
+
+env:
+  global:
+    - PACKAGE_NAME=ncreplayer
+    - secure: "n2fDU3WQjw781S8p1qUVAOIbNay991tk0LiiKZkYPJFUxEUT23yA11i/XODKRdoCuLS7gNfBb1P9QWNXQ9liHIRFzCbYRBRvUseHnkAraTBg3Wq2dDikheUQO82S5TMlttmCXJHaqQLdK3YxBqJdc2FitzxqD0/qn9sSmbfTD5MCAymcFWtqRrLyb4PbnmlJvL2EgFQI9AaZq59WDwo04Gw+tDvBn7krb9HQ8ATzw+YVgIO65xk6TXMPqg0NAnkPmYBf4E39ewyeBvPGbgngvk47zWxQ2GO18Au095P+dk6mykmtjsEf68XrobF+bZyz4Em0IcTP8pGeuvkgRhFysNUiW9KXH+UfhIv9MU1Fx4Q/229d2jPYy0xD6IvG9JW9m7bZmBUp6to7uqDnfxnrlxmTKf7CN/M0qpFSIyqXZEfNye4LlvnTOBJh5XkfZnBHLpwptacMlS5m1pjOWYbSUSGUDebqtQTBDaF7g8EcXMkUKw6nMXE1uTvDM7kcSvBNBaVQh5ammZLn2y6rqfZR0NK9vyGGfl1N+axe+U48iRpFBDs3Pq/IeSWvPVajbpR/kIjstu9ybu6qQPq1BlozvbPEuVGNUAja1jAWP/v3YNbJtWl2bWviyLw7/NWC5W95TPLLFUP1p6nqf3AkiZPjpAVmhC2lY1R9CfotSXD0Bo0="
+
+matrix:
+  fast_finish: true
+  include:
+    - name: "default"
+      env:  PY=3.7
+    - name: "coding_standards"
+      env:  PY=3.7
+  allow_failures:
+    - name: "coding_standards"
+      env:  PY=3.7
+
+before_install:
+    # Install miniconda and create TEST env.
+  - |
+    wget http://bit.ly/miniconda -O miniconda.sh
+    bash miniconda.sh -b -p $HOME/miniconda
+    export PATH="$HOME/miniconda/bin:$PATH"
+    conda config --set always_yes yes --set changeps1 no --set show_channel_urls true
+    conda update conda --quiet
+    conda config --add channels conda-forge --force
+    conda install pycryptosat
+    conda config --set channel_priority strict
+    conda config --set safety_checks disabled
+    conda create --name TEST python=$PY --file requirements.txt --file requirements-dev.txt
+    source activate TEST
+
+install:
+  - python setup.py sdist && version=$(python setup.py --version) && pushd dist && pip install --no-deps --force-reinstall ${PACKAGE_NAME}-${version}.tar.gz && popd
+
+script:
+  - if [[ $TRAVIS_JOB_NAME == "default" ]]; then
+      cp -r tests/ /tmp ;
+      pushd /tmp && pytest -n 2 -rxs tests && popd ;
+    fi
+
+  - if [[ $TRAVIS_JOB_NAME == "coding_standards" ]]; then
+      py.test --flake8 -m flake8 ;
+    fi
+
+after_success:
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_TAG" != "" ] && [ "$TEST_TARGET" == "default" ]; then
+      conda install -n root conda-build anaconda-client ;
+      conda build conda-recipe;
+      anaconda -t $ANACONDA_TOKEN upload --force -u axiom-data-science $HOME/miniconda/**/${PACKAGE_NAME}-*.tar.bz2 ;
+    fi
+
+deploy:
+
+  - provider: releases
+    api_key:
+      secure: "cvbHcXSGGwwcx50E+66M+ij9RqRgNqD6q7gNGpA/UTbxXdZoXqucbino1t0TVto0OV/ZXJMqbmqe8TGIjHOg8k8UpEYWHZw6etbIM/VpD1KHqqyiWp2GSu6E59FeHj3w93X4QOl4wUpVJN1u24e+Gd3f492aupnjFHNetdbN38TI29S8KG7RBQQ9VX1je29BwLNrC5XI4OwCXS4cV6DdWedBD5W7dGNkyjgj+HV0SOTCO/VRDsHTZJMyAqCYf7esH5/vBCY9vEWVvUwXPFszcy8VBCyVQsgguWkwYQBQvxD8MXzLA24L7b1d8Ec9X04K5EyJrcEEyIA4BfammoehuRFoSfLxx5pGZfU9kRE0YbiidJ0OdkjUdorSUoSHNSpgz/jOJZxjJuS8d+kVUkvQ0Ksfs2GV07weCA3hlwI1BFDa58CCziNg8Dw4y0lnuF0Fx5+b/DB+ISFhJuI+xa3ZtT6ZgY2hGHKm9qBSwF3KUk4dRHManEYlU87rnlZRP8RwXwB4At3qO3qR48glsrKBQRGXcqvtcGvs9Nenp5L1h+ChkjtBIw1qd9/ZZpqkQec7o0h2AwglOClAz+j9d3rVuqFUcuMLZ1OU8XdMX2JfRgL1Unr5J5QSbVBhes/2nXsMWmrcFTJzk11dBcP65H4URGJD7aGS16rjOHubxY/ntHk="
+    file_glob: true
+    file: "$HOME/miniconda/**/${PACKAGE_NAME}-*.tar.bz2"
+    skip_cleanup: true
+    on:
+      tags: true
+      all_branches: master
+      condition: '$TRAVIS_JOB_NAME == "default"'
+
+  - provider: pypi
+    user: kwilcox
+    password:
+      secure: "hhS9vPtQMOLo87hi3Isk4uIdrk6PPJ4PV6LAZQ9Gvjty7eFk8h4zbiPQpw+1K6S5IjyqT9PAIE31woULHcPMVRG90lVy16lWa6b6QSd6lxx9B94tmIPSJXReAq8XXT5gXmGEHPMq1+jY17AdA/oO3fZ+ROLQc2Ch1vSIDlFSwKvViTlQaq0WCOhSMZl6jGAPjzi44waY+5exFLf7hhzkTkZ8mZQ/SdZuSBvqiIBDowwAP1frvUY/irzfHC2A5zr3KpcCvIVlQqfCFH/6vjDHmnOjtAsr0FHkSQJUiUbHjaSIZxEfEenBBMT40usffZnhNVmbP0Q8fc2M3wjTuZzdddKqETGC4Z5X+pNFFMaUd/0HTdw5yfTKlpAqcx3ZCwjb2GFnmi8kR8MrIWupWdsIaMLaoMfrudkSdaLUMWrLI+iBl9zyYbFijOVguDytXAJxhL9fVJbTfJR6B04BqRzWpQlsB31vcKAqBixDXMb1PxOzhMU2P2kSESMc2zJbB7cJ0HgVTynOeymfv9kZothS4/S/2TwKk//+/O9EnvQ1HrQS97w+wbKUuZojrEC73rvKLgtLnlWBO1iW0QZIJgUfQAMrb8zuCbu2+qOtqIY+wV1Lvt1WSCOXoA+BtzaPUZt0set84U3V1Wuo9tIJ0EInoUtOR8xNzWXt5/vQQwl+Qew="
+    distributions: sdist bdist_wheel
+    upload_docs: no
+    skip_cleanup: true
+    on:
+      tags: true
+      all_branches: master
+      condition: '$TRAVIS_JOB_NAME == "default"'

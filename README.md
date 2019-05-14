@@ -1,4 +1,4 @@
-## netcdf-replayer
+## ncreplayer
 
 Small little utility designed to load a CF DSG compliant netCDF file and replay it back onto a Kafka topic in either `batch` mode or `stream` mode. Optionally control the timestamps and timedeltas in the original file using configuration parameters.
 
@@ -131,7 +131,7 @@ $ docker run -d --net=host \
     -e RUNTESTS=0 \
     -e FORWARDLOGS=0 \
     -e SAMPLEDATA=0 \
-    --name netcdf-replayer-testing \
+    --name ncreplayer-testing \
   landoop/fast-data-dev:1.0.1
 ```
 
@@ -142,7 +142,7 @@ $ docker run -it --rm --net=host \
   landoop/fast-data-dev:1.0.1  \
     kafka-console-consumer \
       --bootstrap-server localhost:4001 \
-      --topic axds-netcdf-replayer-data
+      --topic axds-ncreplayer-data
 ```
 
 Now batch or stream a file:
@@ -163,7 +163,7 @@ $ docker run -it --rm --net=host \
     kafka-avro-console-consumer \
       --bootstrap-server localhost:4001 \
       --property schema.registry.url=http://localhost:4002 \
-      --topic axds-netcdf-replayer-data
+      --topic axds-ncreplayer-data
 ```
 
 And use `avro` packing

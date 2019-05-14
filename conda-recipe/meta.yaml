@@ -1,0 +1,37 @@
+package:
+  name: ncreplayer
+  version: "1.0.0"
+
+source:
+  path: ../
+
+build:
+  number: 0
+  noarch: python
+  script: python -m pip install --no-deps --ignore-installed .
+
+requirements:
+  build:
+    - python
+    - pip
+  run:
+    - python
+    - click
+    - easyavro >=2.5.0
+    - msgpack-python
+    - numpy
+    - pandas
+    - pocean-core
+
+test:
+  source_files:
+    - ncreplayer
+  imports:
+    - ncreplayer
+  commands:
+    - ncreplay --help
+
+about:
+  home: https://github.com/axiom-data-science/ncreplayer
+  license: MIT
+  summary: 'A python framework for working with met-ocean data.'

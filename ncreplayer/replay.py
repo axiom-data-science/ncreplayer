@@ -18,9 +18,17 @@ from pocean.utils import get_mapped_axes_variables, get_default_axes
 
 
 import logging
-L = logging.getLogger('easyavro')
-L.addHandler(logging.StreamHandler())
+log_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+stream = logging.StreamHandler()
+stream.setFormatter(log_format)
+
+ea = logging.getLogger('easyavro')
+ea.setLevel(logging.INFO)
+ea.addHandler(stream)
+
+L = logging.getLogger('ncreplay')
 L.setLevel(logging.INFO)
+L.addHandler(stream)
 
 
 def extract_axes(filename):
@@ -164,7 +172,8 @@ def send_frame(df, axes, producer, ncmeta, packing):
         # Clear None values from data
         records.append((None, data))
 
-    producer.produce(records)
+    if producer is not None:
+        producer.produce(records)
 
 
 @click.group()
@@ -173,11 +182,28 @@ def send_frame(df, axes, producer, ncmeta, packing):
 @click.option('--topic',    type=str, required=True, default='axds-netcdf-replayer-data', help="Kafka topic to send the data to")
 @click.option('--packing',  type=click.Choice(['json', 'avro', 'msgpack']), default='json', help="The data packing algorithm to use")
 @click.option('--registry', type=str, default='http://localhost:4002', help="URL to a Schema Registry if avro packing is requested")
-@click.option('--uid', type=str, default='', help="Variable name, global attribute, or value to use for the uid values")
-@click.option('--gid', type=str, default='', help="Variable name, global attribute, or value to use for the gid values")
-@click.option('--meta/--no-meta', default=False, help="Include the `nco-json` metadata in each message?")
+@click.option('--uid',      type=str, default='', help="Variable name, global attribute, or value to use for the uid values")
+@click.option('--gid',      type=str, default='', help="Variable name, global attribute, or value to use for the gid values")
+@click.option('--logfile',  type=str, default='', help="File to log messages to. Defaults to stdout.")
+@click.option('--meta/--no-meta',       default=False, help="Include the `nco-json` metadata in each message?")
+@click.option('--dry-run/--no-dry-run', default=False, help="Dry running will not send messages, only construct them")
+@click.option('-v', '--verbose', count=True)
 @click.pass_context
-def setup(ctx, filename, brokers, topic, packing, registry, uid, gid, meta):
+def setup(ctx, filename, brokers, topic, packing, registry, uid, gid, logfile, meta, dry_run, verbose):
+
+    if logfile:
+        handler = logging.FileHandler(logfile)
+        handler.setFormatter(log_format)
+        ea.addHandler(handler)
+        L.addHandler(handler)
+
+    if verbose == 0:
+        ea.setLevel(logging.INFO)
+        L.setLevel(logging.INFO)
+    if verbose >= 1:
+        ea.setLevel(logging.DEBUG)
+        L.setLevel(logging.DEBUG)
+
     # Learn about the axes from the netCDF file
     axes = extract_axes(filename)
 
@@ -225,6 +251,10 @@ def setup(ctx, filename, brokers, topic, packing, registry, uid, gid, meta):
             kafka_topic=topic,
         )
 
+    if dry_run is True:
+        L.info('Running in dry mode!')
+        bp = None
+
     ctx.obj['producer'] = bp
 
 
@@ -242,12 +272,12 @@ def batch(ctx, starting, factor, offset, chunk, delta):
     """
     df = recalc_with_factor_offset(ctx.obj['df'], ctx.obj['axes'], starting, factor, offset)
 
-    click.echo(f"{len(df)} rows total")
+    L.info(f"{len(df)} rows total")
 
     while True:
 
         sub = df.iloc[0:chunk]
-        click.echo(f"Sending {len(sub)} rows from {sub.time.min()} to {sub.time.max()}")
+        L.info(f"Sending {len(sub)} rows from {sub.time.min()} to {sub.time.max()}")
         send_frame(sub, ctx.obj['axes'], ctx.obj['producer'], ctx.obj['ncmeta'], ctx.obj['packing'])
 
         # reset df to be without the rows we just sent
@@ -256,7 +286,7 @@ def batch(ctx, starting, factor, offset, chunk, delta):
             break
 
         # Sleep for some time relative to delta
-        click.echo(f"Sleeping for {delta} second(s)")
+        L.info(f"Sleeping for {delta} second(s)")
         time.sleep(delta)
 
 
@@ -279,7 +309,7 @@ def stream(ctx, starting, delta):
         sub_query = (df.time < send_end) & (df.time >= send_start)
 
         sub = df.loc[sub_query]  # Extract the rows to send
-        click.echo(f"Sending {len(sub)} rows from {send_start} to {send_end}")
+        L.info(f"Sending {len(sub)} rows from {send_start} to {send_end}")
         send_frame(sub, ctx.obj['axes'], ctx.obj['producer'], ctx.obj['ncmeta'], ctx.obj['packing'])
 
         # reset df to be without the rows we just sent
@@ -291,7 +321,7 @@ def stream(ctx, starting, delta):
         send_end = send_start + timedelta(seconds=delta)
 
         # Sleep for some time relative to delta
-        click.echo(f"Sleeping for {delta} second(s)")
+        L.info(f"Sleeping for {delta} second(s)")
         time.sleep(delta)
 
 

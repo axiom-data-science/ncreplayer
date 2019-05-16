@@ -200,7 +200,7 @@ def setup(ctx, filename, brokers, topic, packing, registry, uid, gid, logfile, m
     if verbose == 0:
         ea.setLevel(logging.INFO)
         L.setLevel(logging.INFO)
-    if verbose >= 1:
+    elif verbose >= 1:
         ea.setLevel(logging.DEBUG)
         L.setLevel(logging.DEBUG)
 

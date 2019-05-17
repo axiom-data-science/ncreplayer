@@ -69,7 +69,7 @@ def load(filename, axes, promotions):
     # Load the DSG and convert to a dataframe
     with CFDataset.load(filename) as ncd:
 
-        df = ncd.to_dataframe(axes=axes)
+        df = ncd.to_dataframe(axes=axes, clean_rows=False, clean_cols=False)
 
         for toz, (fromz, extract_fromz) in promotions.items():
 

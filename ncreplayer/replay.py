@@ -152,8 +152,8 @@ def send_frame(df, axes, producer, ncmeta, packing):
         rowd = row._asdict()
 
         data = {
-            "uid": rowd['uid'],
-            "gid": rowd['gid'],
+            "uid": str(rowd['uid']),
+            "gid": str(rowd['gid']) if rowd['gid'] is not None else None,
             "time": rowd[axes.t].isoformat(),
             "lat": rowd[axes.y],
             "lon": rowd[axes.x],

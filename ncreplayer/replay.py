@@ -119,28 +119,28 @@ def recalc_with_factor_offset(df, axes, starting, factor, offset):
     return df
 
 
-def recalc_with_delta(df, axes, starting, delta):
-    """ Play back data with each timestep statically configured to be
-        on the delta steps
-    """
-    df = df.sort_values(axes.t)
+# def recalc_with_delta(df, axes, starting, delta):
+#     """ Play back data with each timestep statically configured to be
+#         on the delta steps
+#     """
+#     df = df.sort_values(axes.t)
 
-    # Calculate timediff before setting initial starting time
-    timediff = df[axes.t] - df[axes.t].iloc[0]
+#     # Calculate timediff before setting initial starting time
+#     timediff = df[axes.t] - df[axes.t].iloc[0]
 
-    # One based standardized deltas (as 1 second intervals), then subtract
-    # 1 to get zero based intervals
-    zero_diffs = np.digitize(
-        timediff.dt.total_seconds(), sorted(timediff.dt.total_seconds().unique())
-    ) - 1
+#     # One based standardized deltas (as 1 second intervals), then subtract
+#     # 1 to get zero based intervals
+#     zero_diffs = np.digitize(
+#         timediff.dt.total_seconds(), sorted(timediff.dt.total_seconds().unique())
+#     ) - 1
 
-    # Get the real time by multiplying by the requested delta
-    newtimes = pd.Series(zero_diffs).apply(
-        lambda x: starting + timedelta(seconds=(delta * x))
-    )
-    df[axes.t] = newtimes
+#     # Get the real time by multiplying by the requested delta
+#     newtimes = pd.Series(zero_diffs).apply(
+#         lambda x: starting + timedelta(seconds=(delta * x))
+#     )
+#     df[axes.t] = newtimes
 
-    return df
+#     return df
 
 
 def send_frame(df, axes, producer, ncmeta, packing):
@@ -198,7 +198,7 @@ def setup(ctx, filename, brokers, topic, packing, registry, uid, gid, logfile, m
         L.addHandler(handler)
 
     if verbose == 0:
-        ea.setLevel(logging.INFO)
+        ea.setLevel(logging.WARNING)
         L.setLevel(logging.INFO)
     elif verbose >= 1:
         ea.setLevel(logging.DEBUG)
@@ -286,20 +286,26 @@ def batch(ctx, starting, factor, offset, chunk, delta):
             break
 
         # Sleep for some time relative to delta
-        L.info(f"Sleeping for {delta} second(s)")
+        L.debug(f"Sleeping for {delta} second(s)")
         time.sleep(delta)
+
+    L.info("Done replaying")
 
 
 @setup.command()
 @click.option('-s', '--starting', type=click.DateTime(), default=datetime.utcnow().isoformat(timespec='seconds'))
+@click.option('-f', '--factor',   type=click.FLOAT,      default=1.0)
+@click.option('-o', '--offset',   type=click.FLOAT,      default=0.0)
 @click.option('-d', '--delta',    type=click.FLOAT,      default=60.0)
 @click.pass_context
-def stream(ctx, starting, delta):
-    """ Streams each unique timestep in the netCDF file every [delta] seconds.
-        Optionally you can control the [starting] point of the file and this will re-calculate
-        all of the timestamps to match the original timedeltas.
+def stream(ctx, starting, factor, offset, delta):
+    """ Streams the data from the netCDF file every [delta] seconds.
+        Optionally change the [starting] time of the file and/or change each timedelta using the
+        [factor] and [offset] parameters.
     """
-    df = recalc_with_delta(ctx.obj['df'], ctx.obj['axes'], starting, delta)
+    df = recalc_with_factor_offset(ctx.obj['df'], ctx.obj['axes'], starting, factor, offset)
+
+    L.info(f"{len(df)} rows total")
 
     send_start = df.time.min()
     send_end = send_start + timedelta(seconds=delta)
@@ -321,8 +327,10 @@ def stream(ctx, starting, delta):
         send_end = send_start + timedelta(seconds=delta)
 
         # Sleep for some time relative to delta
-        L.info(f"Sleeping for {delta} second(s)")
+        L.debug(f"Sleeping for {delta} second(s)")
         time.sleep(delta)
+
+    L.info("Done replaying")
 
 
 def run():

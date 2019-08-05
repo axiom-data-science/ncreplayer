@@ -106,12 +106,14 @@ Options:
 $ ncreplay --filename /path/to/file.nc stream --help
 Usage: ncreplay stream [OPTIONS]
 
-  Streams each unqiue timestep in the netCDF file every [delta] seconds.
-  Optionally you can control the [starting] point of the file and this will
-  re-calculate all of the timestamps to match the original timedeltas.
+  Streams the data from the netCDF file every [delta] seconds. Optionally
+  change the [starting] time of the file and/or change each timedelta using
+  the [factor] and [offset] parameters.
 
 Options:
   -s, --starting [%Y-%m-%d|%Y-%m-%dT%H:%M:%S|%Y-%m-%d %H:%M:%S]
+  -f, --factor FLOAT
+  -o, --offset FLOAT
   -d, --delta FLOAT
   --help                          Show this message and exit
 ```
